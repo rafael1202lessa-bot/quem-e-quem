@@ -20,28 +20,34 @@ if "meu_nick" not in st.session_state:
     st.session_state.meu_nick = ""
 if "meu_nome_real" not in st.session_state:
     st.session_state.meu_nome_real = ""
+if "minha_turma" not in st.session_state:
+    st.session_state.minha_turma = ""
 if "sala" not in st.session_state:
     st.session_state.sala = ""
 
-# --- TELA 1: LOGIN SEGURO COM TELEPORTE ---
+# --- TELA 1: LOGIN POR FILTRO DE TURMA/GRUPO ---
 if st.session_state.tela == "login":
     st.title("🕵️‍♂️ Jogo: Quem é Quem?")
-    st.markdown("Insira seus dados para o sistema te teleportar para uma sala disponível!")
+    st.markdown("Combine um **Nome de Grupo** com seus amigos para o sistema teleportar vocês para a mesma sala!")
     
-    nome_real = st.text_input("Seu Nome Verdadeiro (Ficará oculto e protegido):", placeholder="Ex: Rafael").strip()
-    nick = st.text_input("Seu Nick Secreto (Apenas este aparecerá no chat):", placeholder="Ex: GalaticoAnonimo").strip()
+    nome_real = st.text_input("Seu Nome Verdadeiro (Ficará oculto):", placeholder="Ex: Rafael").strip()
+    nick = st.text_input("Seu Nick Secreto (Aparecerá no chat):", placeholder="Ex: GalaticoAnonimo").strip()
+    turma = st.text_input("Nome do Grupo ou Turma (Combine o mesmo com seu amigo):", placeholder="Ex: 9A, 9B, GrupoDoRafa").strip()
     
     if st.button("Entrar no Jogo (Teleportar) 🌀"):
-        if nome_real == "" or nick == "":
-            st.error("Preencha o Nome Verdadeiro e o Nick Secreto!")
+        if nome_real == "" or nick == "" or turma == "":
+            st.error("Por favor, preencha todos os campos!")
         else:
             try:
                 sala_encontrada = ""
                 numero_da_sala = 1
+                grupo_limpo = turma.upper() # Padroniza para maiúsculas para evitar erros de digitação
                 
-                # Procura uma sala disponível (máximo 2 pessoas)
+                # Procura uma sala disponível APENAS dentro do mesmo grupo/turma
                 while sala_encontrada == "":
-                    nome_sala_teste = f"SALA {numero_da_sala}"
+                    nome_sala_teste = f"{grupo_limpo} - SALA {numero_da_sala}"
+                    
+                    # Filtra os jogadores que estão na mesma sala de teste
                     resposta_sala = supabase.table("jogadores").select("*").eq("sala", nome_sala_teste).execute()
                     qtd_jogadores = len(resposta_sala.data) if resposta_sala.data else 0
                     
@@ -50,33 +56,36 @@ if st.session_state.tela == "login":
                     else:
                         numero_da_sala += 1
                 
-                # Salva no banco vinculando Nome Real, Nick e Sala
+                # Salva o jogador associando-o ao grupo e sala corretos
                 supabase.table("jogadores").insert({
                     "nick": nick, 
                     "sala": sala_encontrada,
-                    "nome_real": nome_real
+                    "nome_real": nome_real,
+                    "turma": grupo_limpo
                 }).execute()
                 
                 st.session_state.sala = sala_encontrada
                 st.session_state.meu_nick = nick
                 st.session_state.meu_nome_real = nome_real
+                st.session_state.minha_turma = grupo_limpo
                 st.session_state.tela = "jogo"
                 st.rerun()
                 
             except Exception as erro:
-                st.error(f"Erro no teleporte. Certifique-se de rodar o comando SQL no Supabase! Erro: {erro}")
+                st.error(f"Erro no teleporte. Verifique as configurações do banco! Erro: {erro}")
 
 # --- TELA 2: SALA DO JOGO ---
 elif st.session_state.tela == "jogo":
     st.title("🎮 Painel do Jogo")
-    st.write(f"Sala Atual: **{st.session_state.sala}** | Logado como Nick: **{st.session_state.meu_nick}**")
+    st.write(f"Grupo: **{st.session_state.minha_turma}** | Sala: **{st.session_state.sala}**")
+    st.write(f"Logado como: **{st.session_state.meu_nick}**")
     
-    # Mostra quem está na sala usando APENAS o nick secreto para manter o mistério
+    # Lista nicks conectados na mesma sala
     try:
         parceiros = supabase.table("jogadores").select("nick").eq("sala", st.session_state.sala).execute()
         lista_nicks = [p['nick'] for p in parceiros.data] if parceiros.data else []
         if lista_nicks:
-            st.caption(f"🕵️‍♂️ Nicks conectados nesta sala: {', '.join(lista_nicks)}")
+            st.caption(f"🕵️‍♂️ Nicks nesta sala: {', '.join(lista_nicks)}")
     except:
         pass
 
@@ -90,12 +99,11 @@ elif st.session_state.tela == "jogo":
         if st.button("Enviar Pista"):
             if pergunta.strip() != "":
                 try:
-                    dados_pista = {
+                    supabase.table("mensagens").insert({
                         "jogador": st.session_state.meu_nick,
                         "texto": pergunta.strip(),
                         "sala": st.session_state.sala
-                    }
-                    supabase.table("mensagens").insert(dados_pista).execute()
+                    }).execute()
                     st.toast("Pista enviada! 🚀")
                     st.rerun()
                 except Exception as erro:
@@ -118,32 +126,26 @@ elif st.session_state.tela == "jogo":
     # --- ABA 2: SISTEMA DE PALPITES COM VALIDAÇÃO AUTOMÁTICA ---
     with aba_palpites:
         st.subheader("Quem você acha que é?")
-        
-        # O jogador seleciona ou digita o Nick Secreto que ele suspeita
         nick_suspeito = st.text_input("Nick Secreto do Suspeito:", placeholder="Ex: NinjaAnonimo").strip()
         palpite_nome_real = st.text_input("Qual o Nome Verdadeiro dele?", placeholder="Ex: João").strip()
         
         if st.button("Lançar Palpite Oficial 🚨"):
             if nick_suspeito != "" and palpite_nome_real != "":
                 try:
-                    # Busca no banco secreto quem é o dono real daquele nick nesta sala
                     busca = supabase.table("jogadores").select("nome_real").eq("sala", st.session_state.sala).eq("nick", nick_suspeito).execute()
                     
                     resultado_status = "❌ ERROU"
                     if busca.data:
                         nome_verdadeiro_banco = busca.data[0]['nome_real']
-                        # Compara ignorando maiúsculas/minúsculas
                         if nome_verdadeiro_banco.lower() == palpite_nome_real.lower():
                             resultado_status = "💥 ACERTOU EM CHEIO! DESMASCARADO!"
                     
-                    # Salva o histórico do palpite para todos verem o resultado
-                    dados_palpite = {
+                    supabase.table("palpites").insert({
                         "acusador": st.session_state.meu_nick,
                         "suspeito": f"{nick_suspeito} (Chutou: {palpite_nome_real})",
                         "palpite": resultado_status,
                         "sala": st.session_state.sala
-                    }
-                    supabase.table("palpites").insert(dados_palpite).execute()
+                    }).execute()
                     
                     if "💥" in resultado_status:
                         st.balloons()
@@ -163,7 +165,6 @@ elif st.session_state.tela == "jogo":
             lista_palpites = supabase.table("palpites").select("*").eq("sala", st.session_state.sala).order("created_at", desc=True).execute()
             if lista_palpites.data:
                 for pal in lista_palpites.data:
-                    # Mostra quem acusou e o veredito automático gerado pelo sistema
                     if "💥" in pal['palpite']:
                         st.success(f"💥 **{pal['acusador']}** desmascarou o suspeito! {pal['palpite']}")
                     else:
@@ -177,10 +178,10 @@ elif st.session_state.tela == "jogo":
     with aba_regras:
         st.subheader("📜 Como Jogar")
         st.markdown("""
-        1. **Cadastro Seguro:** Digite seu nome real e seu apelido secreto. Seu nome real fica trancado em segredo no servidor.
-        2. **O Teleporte:** O sistema junta os jogadores em duplas por salas automaticamente.
-        3. **Investigação:** Mande pistas na aba de chat. Tente descobrir quem está na sala com você.
-        4. **Acusação Final:** Na aba de palpites, coloque o Nick do suspeito e o Nome Real dele. O sistema vai validar na hora se você acertou ou errou!
+        1. **Cadastro Inteligente:** Digite seu nome real, apelido e o nome do seu grupo combinado.
+        2. **Matchmaking Seguro:** O sistema só coloca na mesma sala quem digitou exatamente o mesmo nome de grupo.
+        3. **Investigação:** Mande pistas na aba de chat e tente descobrir o nome real do seu oponente.
+        4. **Acusação Final:** Digite o Nick e o Nome Real do suspeito para o sistema validar na hora se você ganhou!
         """)
 
     # --- MENU LATERAL: ADMIN & LOGOUT ---
@@ -190,7 +191,6 @@ elif st.session_state.tela == "jogo":
         senha_admin = st.text_input("Senha Master:", type="password")
         if senha_admin == "admin123":
             st.success("Acesso Liberado")
-            
             if st.button("🗑️ Resetar Servidor Inteiro (Geral)"):
                 try:
                     supabase.table("mensagens").delete().neq("id", 0).execute()
@@ -212,10 +212,11 @@ elif st.session_state.tela == "jogo":
         st.session_state.tela = "login"
         st.session_state.meu_nick = ""
         st.session_state.meu_nome_real = ""
+        st.session_state.minha_turma = ""
         st.session_state.sala = ""
         st.rerun()
 
     st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
     st.sidebar.markdown("---")
     st.sidebar.markdown("💻 **Desenvolvido por Rafael Lessa**")
-            
+    
