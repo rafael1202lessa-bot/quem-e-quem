@@ -4,17 +4,15 @@ from supabase import create_client, Client
 # Configuração da página
 st.set_page_config(page_title="Quem é Quem?", page_icon="🕵️‍♂️", layout="centered")
 
-# ENDEREÇO 100% CORRETO COM 'T' E SEM PATH ADICIONAL
+# CONEXÃO DIRETA CORRETA
 SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co"
 SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
 
-def conectar_banco():
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
-
+# Criando o cliente diretamente (sem travar no cache antigo)
 try:
-    supabase: Client = conectar_banco()
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 except Exception as e:
-    st.error("Erro ao conectar ao banco de dados.")
+    st.error(f"Erro de conexão inicial: {e}")
 
 # Controle de telas
 if "tela" not in st.session_state:
@@ -54,8 +52,10 @@ elif st.session_state.tela == "jogo":
                         "jogador": st.session_state.meu_nick,
                         "texto": pergunta.strip()
                     }
-                    supabase.table("mensagens").insert(dados_pista).execute()
-                    st.success("Pista enviada com sucesso!")
+                    # Executa o insert de forma direta
+                    resposta = supabase.table("mensagens").insert(dados_pista).execute()
+                    st.toast("Pista enviada com sucesso! 🚀")
+                    st.success("Pista salva no banco de dados!")
                     st.rerun()
                 except Exception as erro:
                     st.error(f"Erro ao enviar pista: {erro}")
@@ -71,8 +71,8 @@ elif st.session_state.tela == "jogo":
                     st.info(f"🕵️‍♂️ Pista recebida: \"{msg['texto']}\"")
             else:
                 st.write("Nenhuma pista enviada ainda.")
-        except Exception:
-            st.write("Aguardando novas pistas...")
+        except Exception as e:
+            st.write(f"Aguardando novas pistas... (Status: {e})")
 
     # --- ABA 2: SISTEMA DE PALPITES ---
     with aba_palpites:
@@ -90,12 +90,13 @@ elif st.session_state.tela == "jogo":
                         "palpite": palpite_identidade.strip()
                     }
                     supabase.table("palpites").insert(dados_palpite).execute()
+                    st.toast("Palpite registrado! 🚨")
                     st.success(f"Palpite contra {suspeito} registrado!")
                     st.rerun()
                 except Exception as erro:
                     st.error(f"Erro ao enviar palpite: {erro}")
             else:
-                st.warning("Preencha o nome do suspeito and o palpite!")
+                st.warning("Preencha o nome do suspeito e o palpite!")
                 
         st.markdown("---")
         st.subheader("📢 Palpites Feitos")
