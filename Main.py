@@ -6,8 +6,8 @@ st.set_page_config(page_title="Chat Privado da Galera", page_icon="💬", layout
 
 # --- CONEXÃO COM O SEU SEGUNDO BANCO DE DADOS ---
 # ⚠️ Importante: Substitua as duas linhas abaixo pelas credenciais do seu SEGUNDO projeto do Supabase!
-SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co"
-SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
+SUPABASE_URL = "https://ldjtqgeyorkzbvuichjj.supabase.co"
+SUPABASE_KEY = "sb_publishable_ZWY9Hp6kQrhOzff6xc_DrA_8TlnrqQ_"
 
 try:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
