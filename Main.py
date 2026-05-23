@@ -61,7 +61,7 @@ elif st.session_state.tela == "jogo":
                         "jogador": st.session_state.meu_nick,
                         "texto": pergunta.strip()
                     }
-                    supabase.table("Mensagens").insert(dados_pista).execute()
+                    supabase.table("mensagens").insert(dados_pista).execute()
                     st.success("Pista enviada com sucesso!")
                 except Exception as erro:
                     st.error(f"Erro ao enviar pista: {erro}")
@@ -72,7 +72,7 @@ elif st.session_state.tela == "jogo":
         st.markdown("---")
         st.subheader("📋 Histórico de Pistas")
         try:
-            historico = supabase.table("Mensagens").select("*").order("created_at", descending=True).execute()
+            historico = supabase.table("mensagens").select("*").order("created_at", descending=True).execute()
             if historico.data:
                 for msg in historico.data:
                     # Exibe o texto da pista (você pode ocultar o 'jogador' se quiser que seja 100% secreto)
