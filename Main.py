@@ -4,14 +4,13 @@ from supabase import create_client, Client
 # Configuração da página
 st.set_page_config(page_title="Quem é Quem?", page_icon="🕵️‍♂️", layout="centered")
 
-# Conexão com o Supabase
-if "SUPABASE_URL" in st.secrets and "SUPABASE_KEY" in st.secrets:
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-else:
-    # URL corrigida (sem /rest/v1/) e aspas fechadas perfeitamente
-    SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co"
-    SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
+# FORÇANDO A CONEXÃO CORRETA DIRETO PELO CÓDIGO
+# (Ignora os Secrets do Streamlit para garantir que use o link limpo sem o /rest/v1/)
+SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co"
+SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
+
+# Mostra visualmente no menu lateral para termos certeza de que mudou
+st.sidebar.caption(f"Conectado em: {SUPABASE_URL}")
 
 @st.cache_resource
 def conectar_banco():
@@ -120,4 +119,4 @@ elif st.session_state.tela == "jogo":
         st.session_state.tela = "login"
         st.session_state.meu_nick = ""
         st.rerun()
-        
+                    
