@@ -4,10 +4,12 @@ from supabase import create_client, Client
 # Configuração da página do Chat
 st.set_page_config(page_title="Chat Privado da Galera", page_icon="💬", layout="centered")
 
-# --- CONEXÃO COM O SEU SEGUNDO BANCO DE DADOS ---
-# ⚠️ Importante: Substitua as duas linhas abaixo pelas credenciais do seu SEGUNDO projeto do Supabase!
+# --- CONEXÃO COM O SEU BANCO DE DADOS ---
+# A URL já está configurada! Agora só falta você colocar a sua KEY anon abaixo.
 SUPABASE_URL = "https://ldjtqgeyorkzbvuichjj.supabase.co"
-SUPABASE_KEY = "sb_publishable_ZWY9Hp6kQrhOzff6xc_DrA_8TlnrqQ_"
+
+# ⚠️ ATENÇÃO: Substitua o texto abaixo pela sua "anon public key" (aquela chave bem longa)
+SUPABASE_KEY = "COLE_AQUI_A_SUA_CHAVE_ANON_LONGA"
 
 try:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -15,7 +17,7 @@ except Exception as e:
     st.error("Erro de conexão com o servidor.")
 
 # --- DEFINIÇÃO DA SENHA DE SEGURANÇA ---
-# Mude a palavra abaixo para a senha secreta que você vai passar para a galera no TikTok
+# Essa é a senha que você vai passar para os seus amigos entrarem
 SENHA_CORRETA = "galera123" 
 
 # Controle de sessão (se está logado ou não)
@@ -27,7 +29,7 @@ if "nome_usuario" not in st.session_state:
 # --- TELA 1: BARREIRA DE SEGURANÇA ---
 if not st.session_state.logado:
     st.title("🔒 Chat Privado")
-    st.markdown("Este é um espaço seguro e restrito para os amigos do Rafael. Digite suas credenciais para entrar.")
+    st.markdown("Este é um espaço seguro e restrito. Digite suas credenciais para entrar.")
     
     nome = st.text_input("Seu Nome ou Apelido:", placeholder="Ex: Luccas").strip()
     senha_digitada = st.text_input("Senha de Acesso do Grupo:", type="password", placeholder="Digite a senha secreta")
@@ -47,7 +49,7 @@ else:
     st.title("💬 Chat Oficial da Galera")
     st.write(f"Conectado como: **{st.session_state.nome_usuario}**")
     
-    # Botão lateral para deslogar com segurança
+    # Botão para deslogar com segurança
     if st.sidebar.button("Sair do Chat 🚪"):
         st.session_state.logado = False
         st.session_state.nome_usuario = ""
@@ -65,7 +67,7 @@ else:
                     }).execute()
                     st.rerun()
                 except Exception as e:
-                    st.error("Não foi possível enviar a mensagem no momento. Verifique a tabela no banco.")
+                    st.error("Não foi possível enviar a mensagem. Verifique se a sua Key está correta.")
             else:
                 st.warning("Não é possível enviar uma mensagem vazia!")
 
@@ -74,19 +76,12 @@ else:
 
     # --- ÁREA DE EXIBIÇÃO DAS MENSAGENS ---
     try:
-        # Busca as últimas 50 mensagens enviadas na tabela 'chat_geral'
-    
-resposta = supabase.table("chat_geral").select("*").order("criado_em", desc=True).limit(50).execute()
-
+        resposta = supabase.table("chat_geral").select("*").order("criado_em", desc=True).limit(50).execute()
         
         if resposta.data:
             for msg in resposta.data:
-                # Formata o horário da mensagem de forma simples (extrai hora e minuto)
-            
-data_hora = msg['criado_em'].split("T")[1][:5] if "T" in msg['criado_em'] else ""
-
+                data_hora = msg['criado_em'].split("T")[1][:5] if "T" in msg['criado_em'] else ""
                 
-                # Destaca visualmente se a mensagem foi enviada pelo próprio usuário logado
                 if msg['usuario'] == st.session_state.nome_usuario:
                     st.markdown(f"🔹 **Você** [{data_hora}]: {msg['mensagem']}")
                 else:
@@ -94,6 +89,6 @@ data_hora = msg['criado_em'].split("T")[1][:5] if "T" in msg['criado_em'] else "
         else:
             st.write("Nenhuma mensagem por aqui ainda. Comece a conversar!")
             
-    except Exception:
-        st.write("Aguardando novas mensagens do servidor...")
+    except Exception as e:
+        st.write("Aguardando conexão correta com o servidor...")
         
