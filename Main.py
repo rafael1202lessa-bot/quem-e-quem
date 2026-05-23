@@ -4,15 +4,10 @@ from supabase import create_client, Client
 # Configuração da página
 st.set_page_config(page_title="Quem é Quem?", page_icon="🕵️‍♂️", layout="centered")
 
-# FORÇANDO A CONEXÃO CORRETA DIRETO PELO CÓDIGO
-# (Ignora os Secrets do Streamlit para garantir que use o link limpo sem o /rest/v1/)
-SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co"
+# CONEXÃO COM A URL REAL (CORRIGIDA PARA 'C' NO INÍCIO)
+SUPABASE_URL = "https://cuymyyxguujeuxwgrssm.supabase.co"
 SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
 
-# Mostra visualmente no menu lateral para termos certeza de que mudou
-st.sidebar.caption(f"Conectado em: {SUPABASE_URL}")
-
-@st.cache_resource
 def conectar_banco():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -119,4 +114,4 @@ elif st.session_state.tela == "jogo":
         st.session_state.tela = "login"
         st.session_state.meu_nick = ""
         st.rerun()
-                    
+        
