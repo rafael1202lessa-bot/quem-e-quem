@@ -7,7 +7,7 @@ st.set_page_config(page_title="Quem é Quem?", page_icon="🕵️‍♂️", lay
 # Conexão com o Supabase
 if "SUPABASE_URL" in st.secrets and "SUPABASE_KEY" in st.secrets:
     SUPABASE_URL = st.secrets["https://tuymyyxguujeuxwgrssm.supabase.co/rest/v1/"]
-    SUPABASE_KEY = st.secrets["sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"]
+    SUPABASE_KEY = ["sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"]
 else:
     # Insira suas chaves aqui se não estiver usando os Secrets do Streamlit:
     SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co/rest/v1/"
