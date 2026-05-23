@@ -9,7 +9,7 @@ if "SUPABASE_URL" in st.secrets and "SUPABASE_KEY" in st.secrets:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 else:
-    SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co
+    SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co"
     SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
 
 @st.cache_resource
