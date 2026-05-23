@@ -75,12 +75,16 @@ else:
     # --- ÁREA DE EXIBIÇÃO DAS MENSAGENS ---
     try:
         # Busca as últimas 50 mensagens enviadas na tabela 'chat_geral'
-        resposta = supabase.table("chat_geral").select("*").order("created_at", desc=True).limit(50).execute()
+    
+resposta = supabase.table("chat_geral").select("*").order("criado_em", desc=True).limit(50).execute()
+
         
         if resposta.data:
             for msg in resposta.data:
                 # Formata o horário da mensagem de forma simples (extrai hora e minuto)
-                data_hora = msg['created_at'].split("T")[1][:5] if "T" in msg['created_at'] else ""
+            
+data_hora = msg['criado_em'].split("T")[1][:5] if "T" in msg['criado_em'] else ""
+
                 
                 # Destaca visualmente se a mensagem foi enviada pelo próprio usuário logado
                 if msg['usuario'] == st.session_state.nome_usuario:
