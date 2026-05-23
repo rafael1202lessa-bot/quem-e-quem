@@ -23,6 +23,8 @@ if "meu_nick" not in st.session_state:
 # --- TELA 1: LOGIN ---
 if st.session_state.tela == "login":
     st.title("🕵️‍♂️ Jogo: Quem é Quem?")
+    st.markdown("Bem-vindo ao sistema anônimo de investigação. Escolha seu codinome para entrar na sala.")
+    
     nick = st.text_input("Escolha seu Nick Secreto:", placeholder="Ex: GalaticoAnonimo")
     
     if st.button("Entrar na Sala"):
@@ -38,7 +40,8 @@ elif st.session_state.tela == "jogo":
     st.title("🎮 Painel do Jogo")
     st.write(f"Logado como: **{st.session_state.meu_nick}**")
     
-    aba_pistas, aba_palpites = st.tabs(["💬 Pistas e Chat", "🚨 Dar Palpite / Acusar"])
+    # Abas do jogo
+    aba_pistas, aba_palpites, aba_regras = st.tabs(["💬 Pistas e Chat", "🚨 Dar Palpite / Acusar", "📜 Regras do Jogo"])
     
     # --- ABA 1: CHAT DE PISTAS ---
     with aba_pistas:
@@ -64,21 +67,20 @@ elif st.session_state.tela == "jogo":
         st.markdown("---")
         st.subheader("📋 Histórico de Pistas")
         try:
-            # Corrigido de descending=True para desc=True para aceitar na nova versão
             historico = supabase.table("mensagens").select("*").order("created_at", desc=True).execute()
             if historico.data:
                 for msg in historico.data:
                     st.info(f"🕵️‍♂️ Pista recebida: \"{msg['texto']}\"")
             else:
                 st.write("Nenhuma pista enviada ainda.")
-        except Exception as e:
-            st.write(f"Aguardando novas pistas...")
+        except Exception:
+            st.write("Aguardando novas pistas...")
 
     # --- ABA 2: SISTEMA DE PALPITES ---
     with aba_palpites:
         st.subheader("Quem você acha que é?")
         
-        suspeito = st.text_input("Nome do jogador suspeito:", placeholder="Ex: João")
+        suspeito = st.text_input("Nome do jogador suspeito (Nome Real):", placeholder="Ex: João")
         palpite_identidade = st.text_input("Qual você acha que é o Nick Secreto dele?", placeholder="Ex: NinjaAnonimo")
         
         if st.button("Lançar Palpite Oficial 🚨"):
@@ -101,7 +103,6 @@ elif st.session_state.tela == "jogo":
         st.markdown("---")
         st.subheader("📢 Palpites Feitos")
         try:
-            # Corrigido de descending=True para desc=True aqui também
             lista_palpites = supabase.table("palpites").select("*").order("created_at", desc=True).execute()
             if lista_palpites.data:
                 for pal in lista_palpites.data:
@@ -111,9 +112,52 @@ elif st.session_state.tela == "jogo":
         except Exception:
             st.write("Aguardando palpites...")
 
+    # --- ABA 3: REGRAS DO JOGO ---
+    with aba_regras:
+        st.subheader("📜 Como Jogar 'Quem é Quem?'")
+        st.markdown("""
+        1. **Configuração Inicial:** Cada jogador entra na sala usando um **Nick Secreto** (sem contar para ninguém qual escolheu).
+        2. **Fase de Pistas:** Na aba **Pistas e Chat**, envie características, fatos ou piadas internas anonimamente para que o grupo tente adivinhar quem é você.
+        3. **A Acusação:** Se você tiver certeza da identidade de alguém, vá na aba **Dar Palpite** e coloque o Nome Real da pessoa junto com o Nick Secreto que você acha que pertence a ela.
+        4. **Vitória:** Ganha quem desmascarar mais integrantes até o fim da rodada!
+        """)
+
+    # --- MENU LATERAL: ADMIN, ASSINATURA & LOGOUT ---
+    st.sidebar.title("⚙️ Opções")
+    
+    # Sistema de Admin Oculto
+    st.sidebar.markdown("---")
+    with st.sidebar.expander("🔑 Painel do Administrador"):
+        senha_admin = st.text_input("Senha Master:", type="password")
+        if senha_admin == "admin123":
+            st.success("Acesso Liberado")
+            
+            if st.button("🗑️ Limpar Todas as Pistas"):
+                try:
+                    supabase.table("mensagens").delete().neq("id", 0).execute()
+                    st.toast("Histórico de pistas deletado!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erro ao limpar: {e}")
+                    
+            if st.button("🗑️ Limpar Todos os Palpites"):
+                try:
+                    supabase.table("palpites").delete().neq("id", 0).execute()
+                    st.toast("Histórico de palpites deletado!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erro ao limpar: {e}")
+        elif senha_admin != "":
+            st.error("Senha Incorreta")
+
     st.sidebar.markdown("---")
     if st.sidebar.button("Sair da Sala"):
         st.session_state.tela = "login"
         st.session_state.meu_nick = ""
         st.rerun()
-            
+
+    # CRÉDITOS E ASSINATURA NO RODAPÉ DA BARRA LATERAL
+    st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("💻 **Desenvolvido por Rafael Lessa**")
+        
