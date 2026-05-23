@@ -9,7 +9,7 @@ st.set_page_config(page_title="Chat Privado da Galera", page_icon="💬", layout
 SUPABASE_URL = "https://ldjtqgeyorkzbvuichjj.supabase.co"
 
 # ⚠️ ATENÇÃO: Substitua o texto abaixo pela sua "anon public key" (aquela chave bem longa)
-SUPABASE_KEY = "COLE_AQUI_A_SUA_CHAVE_ANON_LONGA"
+SUPABASE_KEY = "sb_publishable_ZWY9Hp6kQrhOzff6xc_DrA_8TlnrqQ_"
 
 try:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
