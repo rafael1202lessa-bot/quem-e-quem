@@ -24,56 +24,52 @@ if "sala" not in st.session_state:
 # --- TELA 1: LOGIN E TELEPORTE ---
 if st.session_state.tela == "login":
     st.title("🕵️‍♂️ Jogo: Quem é Quem?")
-    st.markdown("Insira seu codinome. O sistema irá te teleportar para uma sala disponível automaticamente!")
+    st.markdown("Insira seu codinome para o sistema te teleportar para uma sala disponível!")
     
     nick = st.text_input("Escolha seu Nick Secreto:", placeholder="Ex: GalaticoAnonimo").strip()
     
     if st.button("Entrar no Jogo (Teleportar) 🌀"):
         if nick == "":
-            st.error("Digite un nick válido!")
+            st.error("Digite um nick válido!")
         else:
             try:
-                # SISTEMA DE TELEPORTE AUTOMÁTICO (MATCHMAKING)
                 sala_encontrada = ""
                 numero_da_sala = 1
                 
+                # Procura uma sala vazia ou com apenas 1 pessoa
                 while sala_encontrada == "":
                     nome_sala_teste = f"SALA {numero_da_sala}"
                     
-                    # Conta quantos jogadores já estão nessa sala específica
                     resposta_sala = supabase.table("jogadores").select("*").eq("sala", nome_sala_teste).execute()
                     qtd_jogadores = len(resposta_sala.data) if resposta_sala.data else 0
                     
-                    # Limite de 2 pessoas por sala. Se tiver espaço, entra!
                     if qtd_jogadores < 2:
                         sala_encontrada = nome_sala_teste
                     else:
-                        # Se estiver cheia, testa a próxima sala (SALA 2, SALA 3...)
                         numero_da_sala += 1
                 
-                # Registra o jogador na sala encontrada
-                dados_jogador = {"nick": nick, "sala": sala_encontrada}
-                supabase.table("jogadores").insert(dados_jogador).execute()
+                # Tenta registrar o jogador na tabela de controle
+                supabase.table("jogadores").insert({"nick": nick, "sala": sala_encontrada}).execute()
                 
-                # Salva o estado na sessão do navegador
                 st.session_state.sala = sala_encontrada
                 st.session_state.meu_nick = nick
                 st.session_state.tela = "jogo"
                 st.rerun()
                 
             except Exception as erro:
-                st.error(f"Erro no teleporte: {erro}. Verifique se a tabela 'jogadores' foi criada no Supabase.")
+                st.error("Erro no teleporte automático! Verifique se você criou a tabela 'jogadores' no seu painel do Supabase com as colunas 'nick' e 'sala' do tipo text.")
 
 # --- TELA 2: SALA DO JOGO ---
 elif st.session_state.tela == "jogo":
     st.title("🎮 Painel do Jogo")
     st.write(f"Você foi teleportado para a: **{st.session_state.sala}**")
     
-    # Mostra quem está na mesma sala que você
+    # Lista os parceiros da sala atual
     try:
         parceiros = supabase.table("jogadores").select("nick").eq("sala", st.session_state.sala).execute()
         lista_nomes = [p['nick'] for p in parceiros.data] if parceiros.data else []
-        st.caption(f"🕵️‍♂️ Jogadores conectados nesta sala: {', '.join(lista_nomes)}")
+        if lista_nomes:
+            st.caption(f"🕵️‍♂️ Jogadores conectados nesta sala: {', '.join(lista_nomes)}")
     except:
         pass
 
@@ -97,7 +93,7 @@ elif st.session_state.tela == "jogo":
                     st.toast("Pista enviada! 🚀")
                     st.rerun()
                 except Exception as erro:
-                    st.error(f"Erro ao enviar pista: {erro}")
+                    st.error(f"Erro ao enviar pista. Certifique-se de que a coluna 'sala' (tipo text) existe na tabela 'mensagens' no Supabase. Detalhe: {erro}")
             else:
                 st.warning("Escreva algo antes de enviar!")
                 
@@ -132,7 +128,7 @@ elif st.session_state.tela == "jogo":
                     st.toast("Palpite registrado! 🚨")
                     st.rerun()
                 except Exception as erro:
-                    st.error(f"Erro ao enviar palpite: {erro}")
+                    st.error(f"Erro ao enviar palpite. Certifique-se de que a coluna 'sala' (tipo text) existe na tabela 'palpites' no Supabase. Detalhe: {erro}")
             else:
                 st.warning("Preencha todos os campos!")
                 
@@ -152,7 +148,7 @@ elif st.session_state.tela == "jogo":
     with aba_regras:
         st.subheader("📜 Como Jogar")
         st.markdown("""
-        1. **Teleporte:** Você não precisa digitar sala. O servidor te aloca em dupla com o próximo jogador disponível.
+        1. **Teleporte:** Você não precisa digitar código. O servidor organiza as duplas por ordem de login automaticamente.
         2. **Pistas:** Envie fatos anônimos para seu parceiro de sala tentar descobrir quem é você.
         3. **Palpites:** Desmascare a identidade secreta dele antes que ele te desmascare!
         """)
@@ -167,11 +163,10 @@ elif st.session_state.tela == "jogo":
             
             if st.button("🗑️ Resetar Servidor Inteiro (Geral)"):
                 try:
-                    # Limpa absolutamente tudo para começar do zero na segunda feira
                     supabase.table("mensagens").delete().neq("id", 0).execute()
-                    st.table("palpites").delete().neq("id", 0).execute()
-                    st.table("jogadores").delete().neq("id", 0).execute()
-                    st.toast("Todo o servidor foi resetado!")
+                    supabase.table("palpites").delete().neq("id", 0).execute()
+                    supabase.table("jogadores").delete().neq("id", 0).execute()
+                    st.toast("Todo o servidor foi limpo para novas rodadas!")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erro ao resetar: {e}")
@@ -181,7 +176,6 @@ elif st.session_state.tela == "jogo":
     st.sidebar.markdown("---")
     if st.sidebar.button("Sair do Jogo"):
         try:
-            # Remove o registro do jogador ao sair para liberar espaço na sala
             supabase.table("jogadores").delete().eq("nick", st.session_state.meu_nick).eq("sala", st.session_state.sala).execute()
         except:
             pass
@@ -193,4 +187,4 @@ elif st.session_state.tela == "jogo":
     st.sidebar.markdown("<br><br><br>", unsafe_allow_html=True)
     st.sidebar.markdown("---")
     st.sidebar.markdown("💻 **Desenvolvido por Rafael Lessa**")
-            
+    
