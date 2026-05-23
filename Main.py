@@ -8,7 +8,7 @@ st.set_page_config(page_title="Quem é Quem?", page_icon="🕵️‍♂️", lay
 SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co"
 SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
 
-# Criando o cliente diretamente (sem travar no cache antigo)
+# Criando o cliente diretamente
 try:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 except Exception as e:
@@ -52,8 +52,7 @@ elif st.session_state.tela == "jogo":
                         "jogador": st.session_state.meu_nick,
                         "texto": pergunta.strip()
                     }
-                    # Executa o insert de forma direta
-                    resposta = supabase.table("mensagens").insert(dados_pista).execute()
+                    supabase.table("mensagens").insert(dados_pista).execute()
                     st.toast("Pista enviada com sucesso! 🚀")
                     st.success("Pista salva no banco de dados!")
                     st.rerun()
@@ -65,14 +64,15 @@ elif st.session_state.tela == "jogo":
         st.markdown("---")
         st.subheader("📋 Histórico de Pistas")
         try:
-            historico = supabase.table("mensagens").select("*").order("created_at", descending=True).execute()
+            # Corrigido de descending=True para desc=True para aceitar na nova versão
+            historico = supabase.table("mensagens").select("*").order("created_at", desc=True).execute()
             if historico.data:
                 for msg in historico.data:
                     st.info(f"🕵️‍♂️ Pista recebida: \"{msg['texto']}\"")
             else:
                 st.write("Nenhuma pista enviada ainda.")
         except Exception as e:
-            st.write(f"Aguardando novas pistas... (Status: {e})")
+            st.write(f"Aguardando novas pistas...")
 
     # --- ABA 2: SISTEMA DE PALPITES ---
     with aba_palpites:
@@ -101,7 +101,8 @@ elif st.session_state.tela == "jogo":
         st.markdown("---")
         st.subheader("📢 Palpites Feitos")
         try:
-            lista_palpites = supabase.table("palpites").select("*").order("created_at", descending=True).execute()
+            # Corrigido de descending=True para desc=True aqui também
+            lista_palpites = supabase.table("palpites").select("*").order("created_at", desc=True).execute()
             if lista_palpites.data:
                 for pal in lista_palpites.data:
                     st.warning(f"💥 **{pal['acusador']}** acha que **{pal['suspeito']}** é o **{pal['palpite']}**!")
@@ -115,4 +116,4 @@ elif st.session_state.tela == "jogo":
         st.session_state.tela = "login"
         st.session_state.meu_nick = ""
         st.rerun()
-        
+            
