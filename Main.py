@@ -4,8 +4,8 @@ from supabase import create_client, Client
 # Configuração da página
 st.set_page_config(page_title="Quem é Quem?", page_icon="🕵️‍♂️", layout="centered")
 
-# CONEXÃO COM A URL REAL (CORRIGIDA PARA 'C' NO INÍCIO)
-SUPABASE_URL = "https://cuymyyxguujeuxwgrssm.supabase.co"
+# ENDEREÇO 100% CORRETO COM 'T' E SEM PATH ADICIONAL
+SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co"
 SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
 
 def conectar_banco():
@@ -95,7 +95,7 @@ elif st.session_state.tela == "jogo":
                 except Exception as erro:
                     st.error(f"Erro ao enviar palpite: {erro}")
             else:
-                st.warning("Preencha o nome do suspeito e o palpite!")
+                st.warning("Preencha o nome do suspeito and o palpite!")
                 
         st.markdown("---")
         st.subheader("📢 Palpites Feitos")
