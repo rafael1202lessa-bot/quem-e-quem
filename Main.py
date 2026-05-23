@@ -97,8 +97,8 @@ elif st.session_state.tela == "jogo":
                         "suspeito": suspeito.strip(),
                         "palpite": palpite_identidade.strip()
                     }
-                    supabase.table("Palpites").insert(dados_palpite).execute()
-                    st.success(f"Palpite contra {suspeito} registrado!")
+                    supabase.table("palpites").insert(dados_palpite).execute()
+                    st.success(f"palpite contra {suspeito} registrado!")
                 except Exception as erro:
                     st.error(f"Erro ao enviar palpite: {erro}")
             else:
@@ -106,9 +106,9 @@ elif st.session_state.tela == "jogo":
                 
         # Mostrar os palpites da rodada
         st.markdown("---")
-        st.subheader("📢 Palpites Feitos")
+        st.subheader("📢 palpites Feitos")
         try:
-            lista_palpites = supabase.table("Palpites").select("*").order("created_at", descending=True).execute()
+            lista_palpites = supabase.table("palpites").select("*").order("created_at", descending=True).execute()
             if lista_palpites.data:
                 for pal in lista_palpites.data:
                     st.warning(f"💥 **{pal['acusador']}** acha que **{pal['suspeito']}** é o **{pal['palpite']}**!")
