@@ -6,10 +6,9 @@ st.set_page_config(page_title="Quem é Quem?", page_icon="🕵️‍♂️", lay
 
 # Conexão com o Supabase
 if "SUPABASE_URL" in st.secrets and "SUPABASE_KEY" in st.secrets:
-    SUPABASE_URL = st.secrets["https://tuymyyxguujeuxwgrssm.supabase.co/rest/v1/"]
-    SUPABASE_KEY = ["sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"]
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 else:
-    # Insira suas chaves aqui se não estiver usando os Secrets do Streamlit:
     SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co/rest/v1/"
     SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
 
@@ -46,13 +45,12 @@ elif st.session_state.tela == "jogo":
     st.title("🎮 Painel do Jogo")
     st.write(f"Logado como: **{st.session_state.meu_nick}**")
     
-    # Criação de duas abas: uma para Pistas (Mensagens) e outra para Palpites
     aba_pistas, aba_palpites = st.tabs(["💬 Pistas e Chat", "🚨 Dar Palpite / Acusar"])
     
     # --- ABA 1: CHAT DE PISTAS ---
     with aba_pistas:
         st.subheader("Enviar uma pista anônima")
-        pergunta = st.text_input("Sua Pista:", placeholder="Ex: Eu gosto de jogar xadrez...", key="input_pista")
+        pergunta = st.text_input("Sua Pista:", placeholder="Escreva sua pista aqui...", key="input_pista")
         
         if st.button("Enviar Pista"):
             if pergunta.strip() != "":
@@ -63,19 +61,18 @@ elif st.session_state.tela == "jogo":
                     }
                     supabase.table("mensagens").insert(dados_pista).execute()
                     st.success("Pista enviada com sucesso!")
+                    st.rerun()
                 except Exception as erro:
                     st.error(f"Erro ao enviar pista: {erro}")
             else:
                 st.warning("Escreva algo antes de enviar!")
                 
-        # Mostrar o histórico de pistas enviado por todos
         st.markdown("---")
         st.subheader("📋 Histórico de Pistas")
         try:
             historico = supabase.table("mensagens").select("*").order("created_at", descending=True).execute()
             if historico.data:
                 for msg in historico.data:
-                    # Exibe o texto da pista (você pode ocultar o 'jogador' se quiser que seja 100% secreto)
                     st.info(f"🕵️‍♂️ Pista recebida: \"{msg['texto']}\"")
             else:
                 st.write("Nenhuma pista enviada ainda.")
@@ -98,15 +95,15 @@ elif st.session_state.tela == "jogo":
                         "palpite": palpite_identidade.strip()
                     }
                     supabase.table("palpites").insert(dados_palpite).execute()
-                    st.success(f"palpite contra {suspeito} registrado!")
+                    st.success(f"Palpite contra {suspeito} registrado!")
+                    st.rerun()
                 except Exception as erro:
                     st.error(f"Erro ao enviar palpite: {erro}")
             else:
                 st.warning("Preencha o nome do suspeito e o palpite!")
                 
-        # Mostrar os palpites da rodada
         st.markdown("---")
-        st.subheader("📢 palpites Feitos")
+        st.subheader("📢 Palpites Feitos")
         try:
             lista_palpites = supabase.table("palpites").select("*").order("created_at", descending=True).execute()
             if lista_palpites.data:
@@ -117,9 +114,9 @@ elif st.session_state.tela == "jogo":
         except Exception:
             st.write("Aguardando palpites...")
 
-    # Botão para resetar e sair do jogo
     st.sidebar.markdown("---")
     if st.sidebar.button("Sair da Sala"):
         st.session_state.tela = "login"
         st.session_state.meu_nick = ""
         st.rerun()
+        
