@@ -1,4 +1,15 @@
 import streamlit as st
+from supabase import create_client, Client
+
+# ==========================================
+# COLQUE SUAS CHAVES DO SUPABASE AQUI DENTRO:
+# ==========================================
+SUPABASE_URL = "https://tuymyyxguujeuxwgrssm.supabase.co/rest/v1/"
+SUPABASE_KEY = "sb_publishable_mE_GPQgHRnkF1bp241SkyA_Ijynueb5"
+# ==========================================
+
+# Conecta o jogo ao banco de dados do Supabase
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Configuração da página
 st.set_page_config(page_title="Quem é Quem? - Chat Secreto", page_icon="🕵️‍♂️")
@@ -34,7 +45,7 @@ if not st.session_state.entrou_na_sala:
 # --- TELA 2: O JOGO (Depois que ele clica no botão) ---
 else:
     st.success(f"Conectado como: **{st.session_state.meu_nick}**")
-    st.info("🕵️‍♂️ Sistema: Procurando um jogador aleatório para você...")
+    st.info("🕵️‍♂️ Sistema: Conectado ao banco de dados! Enviando mensagens reais agora.")
     
     st.divider()
     
@@ -44,7 +55,16 @@ else:
     with col1:
         pergunta = st.text_input("💬 Enviar Pergunta/Pista:", placeholder="Escreva algo...")
         if st.button("Enviar Mensagem"):
-            st.write(f"Você enviou: {pergunta}")
+            if pergunta.strip() != "":
+                # SALVA A MENSAGEM DIRETO NA SUA TABELA DO SUPABASE!
+                dados = {
+                    "Jogador": st.session_state.meu_nick,
+                    "texto": pergunta
+                }
+                supabase.table("Mensagens").insert(dados).execute()
+                st.success(f"Enviado para o banco: {pergunta}")
+            else:
+                st.warning("Digite algo antes de enviar!")
             
     with col2:
         palpite = st.text_input("🎯 Dar Palpite de quem é:", placeholder="Acho que você é o...")
@@ -55,4 +75,3 @@ else:
     if st.button("Sair da Sala 🚪"):
         st.session_state.entrou_na_sala = False
         st.rerun()
-      
